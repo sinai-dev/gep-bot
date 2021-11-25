@@ -34,6 +34,8 @@ namespace GepBot
         public async Task UpdateTopBuilds()
         {
             await BotManager.UpdateTopBuilds();
+
+            await ReplyAsync("Top builds posts have been updated manually.");
         }
     }
 }

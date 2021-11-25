@@ -91,12 +91,12 @@ namespace GepBot
                     return;
                 }
 
-                // remove embeds
-                await message.ModifySuppressionAsync(true);
-
                 // add thumbs reactions
                 await message.AddReactionAsync(ThumbsUp); 
                 await message.AddReactionAsync(ThumbsDown);
+
+                // remove embeds
+                await message.ModifySuppressionAsync(true);
             }
             else // check for bot commands
             {

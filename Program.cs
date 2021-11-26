@@ -42,7 +42,7 @@ namespace GepBot
             // Run the automatic updating function forever
             while (true)
             {
-                await BotManager.UpdateTopBuilds();
+                await BuildsManager.UpdateTopBuilds();
                 // one hour delay
                 await Task.Delay(3600000);
             }

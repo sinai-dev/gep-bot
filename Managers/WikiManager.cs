@@ -42,7 +42,7 @@ namespace GepBot
                     matchResult = matchResult[match.Value.Length..];
                     if (!string.IsNullOrEmpty(matchResult))
                     {
-                        result = matchResult;
+                        result = matchResult.Trim();
                         return true;
                     }
                 }

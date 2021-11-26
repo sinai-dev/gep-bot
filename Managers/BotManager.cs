@@ -65,22 +65,27 @@ namespace GepBot
 
         private async Task HandleMessageAsync(SocketMessage socketMsg)
         {
-            if (socketMsg.Author.IsBot || socketMsg is not SocketUserMessage message || message.Channel is IDMChannel)
+            if (socketMsg.Author.Id == DiscordClient.CurrentUser.Id
+                || socketMsg is not SocketUserMessage message 
+                || message.Channel is IDMChannel)
                 return;
 
             var context = new SocketCommandContext(discordClient, message);
 
-            // check for commands
-            int argPos = -1;
-            if (message.HasStringPrefix("!", ref argPos))
+            if (message.Channel.Id == BuildsManager.POST_YOUR_BUILDS_CHANNELID)
+                await BuildsManager.HandleMessageAsync(message);
+            else
             {
-                var result = await commandService.ExecuteAsync(context, argPos, serviceProvider);
+                // check for commands
+                int argPos = -1;
+                if (message.HasStringPrefix("!", ref argPos))
+                {
+                    var result = await commandService.ExecuteAsync(context, argPos, serviceProvider);
 
-                if (!result.IsSuccess && result.Error.HasValue)
-                    await context.Channel.SendMessageAsync($":x: {result.ErrorReason}");
+                    if (!result.IsSuccess && result.Error.HasValue)
+                        await context.Channel.SendMessageAsync($":x: {result.ErrorReason}");
+                }
             }
-
-            await BuildsManager.HandleMessageAsync(message);
         }
     }
 }

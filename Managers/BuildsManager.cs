@@ -20,24 +20,10 @@ namespace GepBot
         public static Emote Tsar { get; private set; }
 
         public const ulong OUTWARD_BUILDS_GUILDID = 913322914986737674;
-
         public const ulong TOP_BUILDS_CHANNELID = 913335770566258709;
+        public const ulong POST_YOUR_BUILDS_CHANNELID = 913335663573729290;
 
         private static readonly HashSet<string> AlreadyPostedBuilds = new();
-
-        public static readonly Dictionary<ulong, string> buildCategoryChannels = new()
-        {
-            { 913335663573729290, "Archer" },
-            { 913713383981867008, "Brawler" },
-            { 913713422233899008, "Hex Mage" },
-            { 913713461828136982, "Mage" },
-            { 913713493927145513, "Mercenary" },
-            { 913713533873713193, "Rogue" },
-            { 913713628681764905, "Spellblade" },
-            { 913713672092782622, "Tank" },
-            { 913713735657476148, "Co-op" },
-            { 913713776811982899, "Other" },
-        };
 
         public static void OnClientReady()
         {
@@ -49,8 +35,8 @@ namespace GepBot
 
         public static async Task HandleMessageAsync(SocketUserMessage message)
         {
-            // Handle messages posted in the "post your build" categories
-            if (buildCategoryChannels.ContainsKey(message.Channel.Id))
+            // Handle messages posted in the "post your build" channel
+            if (message.Channel.Id == POST_YOUR_BUILDS_CHANNELID)
                 await HandleBuildPost(message);
         }
 
@@ -126,7 +112,7 @@ namespace GepBot
             ulong channelID = ulong.Parse(split[^2]);
             ulong messageID = ulong.Parse(split[^1]);
 
-            if (buildCategoryChannels.ContainsKey(channelID))
+            if (channelID == POST_YOUR_BUILDS_CHANNELID)
             {
                 var channel = BotManager.DiscordClient.GetGuild(OUTWARD_BUILDS_GUILDID).GetChannel(channelID) as IMessageChannel;
                 if (await channel.GetMessageAsync(messageID) is RestUserMessage message)
@@ -257,12 +243,15 @@ namespace GepBot
                 string matchResult = match.Value;
                 // remove the field name (for some reason Regex.Replace isn't working, idk, just do this for now)
                 regex = new(@$"(?:{fieldName}: \*\*)");
-                match = regex.Match(matchResult);
-                if (match.Success)
+                Match match2 = regex.Match(matchResult);
+                if (match2.Success)
                 {
-                    matchResult = matchResult[match.Value.Length..];
+                    matchResult = matchResult[match2.Value.Length..];
                     if (!string.IsNullOrEmpty(matchResult))
+                    {
                         result = matchResult;
+                        return;
+                    }
                 }
             }
             throw new Exception($"Could not find field '{fieldName}'!");
@@ -280,22 +269,49 @@ namespace GepBot
 
             AlreadyPostedBuilds.Clear();
 
-            foreach (var entry in buildCategoryChannels)
-            {
-                var buildChannel = BotManager.DiscordClient.GetChannel(entry.Key) as SocketTextChannel;
+            var buildChannel = BotManager.DiscordClient.GetChannel(POST_YOUR_BUILDS_CHANNELID) as SocketTextChannel;
 
-                // Get the build channel messages and add them into a sorted set
-                var messages = await buildChannel.GetMessagesAsync(999).FlattenAsync();
-                var sorted = new List<IMessage>(messages);
-                sorted.Sort(BuildComparer.Instance);
+            // Get the build channel messages and add them into a sorted set
+            var messages = await buildChannel.GetMessagesAsync(999).FlattenAsync();
+
+            var buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Archer", new() },
+                { "Brawler", new() },
+                { "Hex Mage", new() },
+                { "Mage", new() },
+                { "Mercenary", new() },
+                { "Rogue", new() },
+                { "Spellblade", new() },
+                { "Tank", new() },
+                { "Co-op", new() },
+                { "Other", new() },
+            };
+
+            foreach (var message in messages)
+            {
+                if (!message.Embeds.Any())
+                    continue;
+
+                RegexFieldFromBuildPost("Type", message.Embeds.First().Description, out string category);
+
+                if (buildCategories.TryGetValue(category, out List<IMessage> list))
+                    list.Add(message);
+                else
+                    Console.WriteLine("Category key not found? '" + category + "'");
+            }
+
+            foreach (var category in buildCategories)
+            {
+                category.Value.Sort(BuildComparer.Instance);
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"```md");
-                sb.AppendLine($"# Top {entry.Value} Builds #");
+                sb.AppendLine($"```fix");
+                sb.AppendLine($"~~~ Top {category.Key} Builds ~~~");
                 sb.AppendLine($"```");
 
                 int count = 0;
-                foreach (var buildMessage in sorted)
+                foreach (var buildMessage in category.Value)
                 {
                     string url = buildMessage.Embeds.First().Url;
                     if (AlreadyPostedBuilds.Contains(url))
@@ -309,22 +325,15 @@ namespace GepBot
                         int votes = BuildComparer.GetVoteTally(buildMessage);
 
                         sb.AppendLine($"{count}: **{name}** ({votes}) | {url}");
-
-                        //if (count >= 5)
-                        //    break;
                     }
                 }
 
                 // get the message in the top builds channel
-                var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains($"Top {entry.Value} Builds")) as RestUserMessage;
+                var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains($"Top {category.Key} Builds")) as RestUserMessage;
 
                 // if no message, send one first so we can edit it.
                 if (topMessage == null)
-                {
-                    var sendMsgTask = topChannel.SendMessageAsync("temp");
-                    await sendMsgTask;
-                    topMessage = sendMsgTask.Result;
-                }
+                    topMessage = await topChannel.SendMessageAsync("temp");
 
                 // modify the top message to contain the new sorted top builds
                 await topMessage.ModifyAsync((MessageProperties msg) =>
@@ -344,7 +353,7 @@ namespace GepBot
             if (sender.Value.IsBot)
                 return;
 
-            if (buildCategoryChannels.ContainsKey(channel.Id))
+            if (channel.Id == POST_YOUR_BUILDS_CHANNELID)
             {
                 try
                 {

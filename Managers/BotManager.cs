@@ -18,8 +18,6 @@ using System.Text.RegularExpressions;
 
 namespace GepBot
 {
-    // TODO: Refactor this class into something more clean. Expansion will be messy if not.
-
     public class BotManager
     {
         public static bool ClientReady { get; private set; }
@@ -40,7 +38,7 @@ namespace GepBot
             // Event handlers
             discordClient.Ready += ClientReadyAsync;
             discordClient.MessageReceived += HandleMessageAsync;
-            discordClient.ReactionAdded += BuildsManager.OnReaction;
+            discordClient.ReactionAdded += TopBuildsManager.OnReaction;
         }
 
         public static JObject GetConfig()
@@ -58,7 +56,7 @@ namespace GepBot
             // Set the playing status
             await discordClient.SetGameAsync("over Aurai", "", ActivityType.Watching);
 
-            BuildsManager.OnClientReady();
+            DiscordUtils.OnDiscordReady();
 
             ClientReady = true;
         }
@@ -72,8 +70,8 @@ namespace GepBot
 
             var context = new SocketCommandContext(discordClient, message);
 
-            if (message.Channel.Id == BuildsManager.POST_YOUR_BUILDS_CHANNELID)
-                await BuildsManager.HandleMessageAsync(message);
+            if (message.Channel.Id == DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
+                await BuildPostManager.HandleMessageAsync(message);
             else
             {
                 // check for commands

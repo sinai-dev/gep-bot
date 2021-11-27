@@ -42,13 +42,12 @@ namespace GepBot
             // Run the automatic updating function forever
             while (true)
             {
-                await BuildsManager.UpdateTopBuilds();
+                // Ideally this should be refactored into a delayed-task system so multiple things can run on a loop.
+                // For now, this is fine.
+                await TopBuildsManager.UpdateTopBuilds();
                 // one hour delay
                 await Task.Delay(3600000);
             }
-
-            //// Run the bot forever.
-            //await Task.Delay(-1);
         }
 
         public static ServiceProvider ConfigureServices()

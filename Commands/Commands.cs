@@ -33,7 +33,7 @@ namespace GepBot.Commands
         [Summary("Update the 'top builds' messages")]
         public async Task UpdateTopBuilds()
         {
-            await BuildsManager.UpdateTopBuilds();
+            await TopBuildsManager.UpdateTopBuilds();
             await ReplyAsync("Top builds posts have been updated manually.");
         }
 
@@ -41,7 +41,25 @@ namespace GepBot.Commands
         [Summary("Updated the build post with the supplied message link")]
         public async Task UpdateBuild(string messageLink)
         {
-            var result = await BuildsManager.UpdateBuildPost(messageLink);
+            var result = await BuildPostManager.UpdateBuildMessage(messageLink);
+            await ReplyAsync(result);
+        }
+
+        [Command("relink")]
+        [Summary("Re-link a build to a new wiki page, if it was moved.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task RelinkBuildModsOnly(string messageLink, string newWikiLink)
+        {
+            var result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
+            await ReplyAsync(result);
+        }
+
+        [Command("relink")]
+        [Summary("Re-link a build to a new wiki page, if it was moved.")]
+        [RequireOwner]
+        public async Task RelinkBuild(string messageLink, string newWikiLink)
+        {
+            var result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
             await ReplyAsync(result);
         }
     }

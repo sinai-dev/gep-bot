@@ -18,11 +18,11 @@ namespace GepBot
             int votes = 0;
             foreach (var reaction in message.Reactions)
             {
-                if (reaction.Key.Name == BuildsManager.ThumbsUp.Name)
+                if (reaction.Key.Name == DiscordUtils.ThumbsUp.Name)
                     votes += reaction.Value.ReactionCount - 1;
-                else if (reaction.Key.Name == BuildsManager.Gold.Name)
+                else if (reaction.Key.Name == DiscordUtils.Gold.Name)
                     votes += (reaction.Value.ReactionCount - 1) * 2;
-                else if (reaction.Key.Name == BuildsManager.Tsar.Name)
+                else if (reaction.Key.Name == DiscordUtils.Tsar.Name)
                     votes += (reaction.Value.ReactionCount - 1) * 3;
             }
             return votes;

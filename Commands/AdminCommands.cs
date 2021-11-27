@@ -9,6 +9,7 @@ using Discord.WebSocket;
 
 namespace GepBot.Commands
 {
+    /*
     public class AdminCommands : ModuleBase<SocketCommandContext>
     {
         [Command("kick")]
@@ -52,4 +53,5 @@ namespace GepBot.Commands
             await channel.DeleteMessagesAsync(items);
         }
     }
+    */
 }

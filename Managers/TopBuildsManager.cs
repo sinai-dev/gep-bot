@@ -122,26 +122,47 @@ namespace GepBot
             }
         }
 
+        private static Dictionary<ulong, IEmote> pendingReactionCache = new();
+
         /// <summary>
         /// Handle a reaction to a post
         /// </summary>
         public static async Task OnReaction(Cacheable<IUserMessage, ulong> _, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            var sender = reaction.User;
-            if (sender.Value.IsBot)
+            var sender = reaction.User.Value;
+            if (sender.IsBot)
                 return;
 
             if (channel.Id == DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
             {
                 try
                 {
-                    var message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
-                    foreach (var otherReaction in message.Reactions)
+                    // the user is probably spam clicking on the reactions.
+                    if (pendingReactionCache.TryGetValue(sender.Id, out IEmote pending))
                     {
-                        if (otherReaction.Key.Name == reaction.Emote.Name)
-                            continue;
+                        // if they re-clicked the same one, just do nothing and return
+                        if (pending == reaction.Emote)
+                            return;
+                        else // otherwise remove this reaction and return
+                        {
+                            var message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
+                            await message.RemoveReactionAsync(reaction.Emote, sender);
+                            return;
+                        }
+                    }
+                    else // no pending reactions. keep this one, remove other reactions.
+                    {
+                        pendingReactionCache.Add(sender.Id, reaction.Emote);
 
-                        try { await message.RemoveReactionAsync(otherReaction.Key, sender.Value); } catch { }
+                        var message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
+                        foreach (var otherReaction in message.Reactions)
+                        {
+                            if (otherReaction.Key.Name == reaction.Emote.Name)
+                                continue;
+                            await message.RemoveReactionAsync(otherReaction.Key, sender);
+                        }
+
+                        pendingReactionCache.Remove(sender.Id);
                     }
                 }
                 catch (Exception ex)

@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using Discord.Rest;
 
 namespace GepBot
 {
@@ -39,15 +42,11 @@ namespace GepBot
             while (!BotManager.ClientReady)
                 await Task.Delay(100);
 
-            // Run the automatic updating function forever
-            while (true)
-            {
-                // Ideally this should be refactored into a delayed-task system so multiple things can run on a loop.
-                // For now, this is fine.
-                await TopBuildsManager.UpdateTopBuilds();
-                // one hour delay
-                await Task.Delay(3600000);
-            }
+            // Update top builds every hour
+            IntervalTask.Create(new TimeSpan(1, 0, 0), TopBuildsManager.UpdateTopBuilds);
+
+            // Run the bot until it is closed.
+            await Task.Delay(-1);
         }
 
         public static ServiceProvider ConfigureServices()
@@ -74,6 +73,43 @@ namespace GepBot
         {
             Console.WriteLine(log.ToString());
             return Task.CompletedTask;
+        }
+
+        // Debug stuff
+
+        private static async Task GetGheeyomMessages(DiscordSocketClient client)
+        {
+            // temp debug
+            Console.WriteLine($"Fetching messages...");
+            var channel = client.Guilds.First(it => it.Id == DiscordUtils.OUTWARD_DISCORD_ID).GetChannel(245626447568437249) as SocketTextChannel;
+            var messages = await channel.GetMessagesAsync(921099326665666670, Direction.After, 5000).FlattenAsync();
+
+            Console.WriteLine($"Sorting {messages.Count()} messages...");
+            var sorted = new List<RestUserMessage>();
+            var comparer = new Comparison<IMessage>(DiscordUtils.GetOlderMessage);
+            foreach (var message in messages)
+                sorted.Add(message as RestUserMessage);
+            sorted.Sort(comparer);
+
+            Console.WriteLine($"Parsing {sorted.Count} messages...");
+            var list = new List<string>();
+            foreach (var message in sorted)
+            {
+                if (message.Author.Id != 152455138152415233)
+                    continue;
+
+                if (message.Reference != null)
+                {
+                    var refMessage = await channel.GetMessageAsync(message.Reference.MessageId.Value);
+                    list.Add($"Q: {refMessage.Content}");
+                    list.Add($"A: {message.Content}");
+                }
+                else
+                    list.Add(message.Content);
+            }
+
+            Console.WriteLine($"Finished parsing, got {list.Count} messages.");
+            File.WriteAllLines("gheeyom.txt", list.ToArray());
         }
     }
 }

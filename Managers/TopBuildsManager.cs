@@ -12,6 +12,7 @@ namespace GepBot
 {
     public class TopBuildsManager
     {
+
         public static void RegexFieldFromBuildPost(string fieldName, string content, out string result)
         {
             Regex regex = new(@$"(?:{fieldName}: \*\*)[^\*\n\r\|]*");
@@ -35,6 +36,38 @@ namespace GepBot
             throw new Exception($"Could not find field '{fieldName}'!");
         }
 
+        public static string GenerateMessageLink(ulong channel, ulong message)
+        {
+            var messageLink = new StringBuilder();
+            messageLink.Append("https://discord.com/channels/")
+                .Append(DiscordUtils.OUTWARD_DISCORD_ID)
+                .Append('/')
+                .Append(channel)
+                .Append('/')
+                .Append(message);
+            return messageLink.ToString();
+        }
+
+        public static async Task SendTopBuildQuickLinks()
+        {
+            var topChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
+            var topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
+
+            var embedBuilder = new EmbedBuilder();
+
+            foreach (var category in DiscordUtils.BUILD_CATEGORIES)
+            {
+                string title = $"Top {category} Builds";
+                var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains(title)) as RestUserMessage;
+                
+                string messageLink = GenerateMessageLink(topMessage.Channel.Id, topMessage.Id);
+
+                embedBuilder.AddField(category, $"[{title}]({messageLink})", false);
+            }
+
+            await topChannel.SendMessageAsync(embed: embedBuilder.Build());
+        }
+
         /// <summary>
         /// Update the top builds post.
         /// </summary>
@@ -47,24 +80,16 @@ namespace GepBot
 
             BuildPostManager.AlreadyPostedBuildURLs.Clear();
 
+            // Get the build channel messages and add them into a sorted list
             var buildChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.POST_YOUR_BUILDS_CHANNELID) as SocketTextChannel;
-
-            // Get the build channel messages and add them into a sorted set
             var messages = await buildChannel.GetMessagesAsync(999).FlattenAsync();
+            //var messages = new List<IMessage>();
+            //foreach (var thread in DiscordUtils.BUILD_THREADS.Values)
+            //    messages.AddRange(await thread.GetMessagesAsync(999).FlattenAsync());
 
-            var buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "Archer", new() },
-                { "Brawler", new() },
-                { "Hex Mage", new() },
-                { "Mage", new() },
-                { "Mercenary", new() },
-                { "Rogue", new() },
-                { "Spellblade", new() },
-                { "Tank", new() },
-                { "Co-op", new() },
-                { "Other", new() },
-            };
+            var buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ctg in DiscordUtils.BUILD_CATEGORIES)
+                buildCategories.Add(ctg, new());
 
             foreach (var message in messages)
             {
@@ -76,7 +101,7 @@ namespace GepBot
                 if (buildCategories.TryGetValue(category, out List<IMessage> list))
                     list.Add(message);
                 else
-                    Console.WriteLine("Category key not found? '" + category + "'");
+                    Console.WriteLine($"Category key not found? '{category}'");
             }
 
             foreach (var category in buildCategories)
@@ -88,6 +113,8 @@ namespace GepBot
                 sb.AppendLine($"~~~ Top {category.Key} Builds ~~~");
                 sb.AppendLine($"```");
 
+                //var embed = new EmbedBuilder();
+
                 int count = 0;
                 foreach (var buildMessage in category.Value)
                 {
@@ -96,13 +123,16 @@ namespace GepBot
                         continue;
                     BuildPostManager.AlreadyPostedBuildURLs.Add(url);
 
-                    if (count < 5)
+                    if (count < 10)
                     {
                         count++;
-                        string name = WikiUtils.ExtractBuildNameFromWikiLink(url);
+                        string name = WikiUtils.ExtractBuildNameFromWikiLink(url).Replace("%27", "'");
                         int votes = BuildComparer.GetVoteTally(buildMessage);
-
-                        sb.AppendLine($"{count}: **{name}** ({votes}) | {url}");
+                        string messageLink = GenerateMessageLink(DiscordUtils.POST_YOUR_BUILDS_CHANNELID, buildMessage.Id);
+                        sb.AppendLine($"{count}: {name} ({votes}) | {url}");
+                        
+                        //Console.WriteLine($"{name} ({votes}) | [Wiki Page]({url}) | [Message link]({messageLink})".Count());
+                        //embed.AddField($"{count}", $"");
                     }
                 }
 
@@ -116,8 +146,8 @@ namespace GepBot
                 // modify the top message to contain the new sorted top builds
                 await topMessage.ModifyAsync((MessageProperties msg) =>
                 {
-                    msg.Flags = MessageFlags.SuppressEmbeds;
                     msg.Content = sb.ToString();
+                    //msg.Embeds = new[] { embed.Build() };
                 });
             }
         }

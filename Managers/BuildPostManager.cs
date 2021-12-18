@@ -46,22 +46,44 @@ namespace GepBot
                 var buildPageUri = new Uri(wikiLink);
 
                 // query the wiki for the source of the page.
-                EmbedBuilder embed = await GenerateBuildEmbedContent(buildPageUri);
+                StringBuilder category = new();
+                EmbedBuilder embed = await GenerateBuildEmbedContent(buildPageUri, category);
 
                 // remove the original message
                 await message.DeleteAsync(new RequestOptions() { AuditLogReason = "Removing to replace with bot post" });
 
+                // send new message
                 // post our new message
                 var newMessage = await message.Channel.SendMessageAsync(embed: embed.Build());
-                
+
                 // add reactions
                 await newMessage.AddReactionAsync(DiscordUtils.ThumbsUp);
                 await newMessage.AddReactionAsync(DiscordUtils.Gold);
                 await newMessage.AddReactionAsync(DiscordUtils.Tsar);
+
+                //// identify correct thread
+                //string ctg = category.ToString();
+                //if (DiscordUtils.BUILD_THREADS.TryGetValue(ctg, out IThreadChannel thread))
+                //{
+                //    // post our new message
+                //    var newMessage = await thread.SendMessageAsync(embed: embed.Build());
+                //
+                //    // add reactions
+                //    await newMessage.AddReactionAsync(DiscordUtils.ThumbsUp);
+                //    await newMessage.AddReactionAsync(DiscordUtils.Gold);
+                //    await newMessage.AddReactionAsync(DiscordUtils.Tsar);
+                //}
+                //else
+                //{
+                //    await DiscordUtils.SendDirectMessage(
+                //        "I could not find a valid category for your Wiki build! " +
+                //        "Please make sure you use one of the available category names and that there are no typos.",
+                //        message.Author);
+                //}
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception loading/parsing wiki page!");
+                Console.WriteLine($"Exception handling build post");
                 Console.WriteLine(ex);
 
                 await message.DeleteAsync();
@@ -77,6 +99,9 @@ namespace GepBot
             try
             {
                 var message = await GetBuildMessage(messageUrl);
+                if (message == null)
+                    return $"Could not find the message linked! :(";
+
                 return await UpdateBuildPost(message, message.Embeds.First().Url, true);
             }
             catch (Exception ex)
@@ -114,7 +139,7 @@ namespace GepBot
             if (channelID != DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
                 throw new Exception("This message is not in the 'post-your-builds' channel!");
 
-            var channel = BotManager.DiscordClient.GetGuild(DiscordUtils.OUTWARD_BUILDS_GUILDID).GetChannel(channelID) as IMessageChannel;
+            var channel = BotManager.DiscordClient.GetGuild(DiscordUtils.OUTWARD_DISCORD_ID).GetChannel(channelID) as IMessageChannel;
 
             if (await channel.GetMessageAsync(messageID) is not RestUserMessage message)
                 throw new Exception("Could not find a valid post from the provided message link!");
@@ -139,7 +164,7 @@ namespace GepBot
             try
             {
                 var buildUrl = new Uri(wikiLink);
-                var embed = await GenerateBuildEmbedContent(buildUrl);
+                var embed = await GenerateBuildEmbedContent(buildUrl, new StringBuilder());
 
                 await message.ModifyAsync((MessageProperties msg) =>
                 {
@@ -171,7 +196,7 @@ namespace GepBot
         /// <summary>
         /// Generate the embed for a build post
         /// </summary>
-        public static async Task<EmbedBuilder> GenerateBuildEmbedContent(Uri buildPageUri)
+        public static async Task<EmbedBuilder> GenerateBuildEmbedContent(Uri buildPageUri, StringBuilder category)
         {
             // get the page name by taking a substring from the end of the url
             var buildName = buildPageUri.ToString()[WikiUtils.VALID_BUILD_LINK.Length..];
@@ -206,7 +231,8 @@ namespace GepBot
             description.AppendLine();
 
             // build category
-            WikiUtils.RegexWikiField("type", wikiContent, out string category);
+            WikiUtils.RegexWikiField("type", wikiContent, out string ctg);
+            category.Append(ctg);
             description.AppendLine($"Type: **{category}**");
 
             // faction
@@ -234,7 +260,11 @@ namespace GepBot
             foreach (var field in equipmentFields)
             {
                 if (WikiUtils.RegexWikiField(field, wikiContent, out string item))
+                {
+                    if (field != "backpack" && WikiUtils.RegexWikiField($"{field}ench", wikiContent, out string ench))
+                        item += $" ({ench})";
                     equipment.Add(item);
+                }
             }
             if (equipment.Any())
                 description.AppendLine($"**{string.Join(", ", equipment)}**");

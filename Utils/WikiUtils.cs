@@ -15,6 +15,13 @@ namespace GepBot
     {
         public const string VALID_BUILD_LINK = @"https://outward.fandom.com/wiki/Build:";
 
+        public static async Task<string> WikiSearch(string title)
+        {
+            string url = @$"https://outward.fandom.com/api.php?action=opensearch&search={title}";
+            string result = await BotManager.HttpClient.GetStringAsync(url);
+            return result;
+        }
+
         public static async Task<string> WikiQuery(string pageName)
         {
             string url = @$"https://outward.fandom.com/api.php?action=query&titles={pageName}&prop=revisions&rvprop=content&format=json"; ;

@@ -9,49 +9,37 @@ using Discord.WebSocket;
 
 namespace GepBot.Commands
 {
-    /*
     public class AdminCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("kick")]
-        [Summary("Kick a user from the server.")]
-        [RequireBotPermission(GuildPermission.KickMembers)]
-        [RequireUserPermission(GuildPermission.KickMembers)]
-        public async Task Kick(SocketGuildUser targetUser, [Remainder] string reason = "No reason provided.")
-        {
-            await targetUser.KickAsync(reason);
-            await ReplyAsync($"**{targetUser}** has been kicked.");
-        }
-
-        [Command("ban")]
-        [Summary("Ban a user from the server")]
-        [RequireUserPermission(GuildPermission.BanMembers)]
-        [RequireBotPermission(GuildPermission.BanMembers)]
-        public async Task Ban(SocketGuildUser targetUser, [Remainder] string reason = "No reason provided.")
-        {
-            await Context.Guild.AddBanAsync(targetUser.Id, 0, reason);
-            await ReplyAsync($"**{targetUser}** has been banned.");
-        }
-
-        [Command("unban")]
-        [Summary("Unban a user from the server")]
-        [RequireBotPermission(GuildPermission.BanMembers)]
-        [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task Unban(ulong targetUser)
-        {
-            await Context.Guild.RemoveBanAsync(targetUser);
-            await Context.Channel.SendMessageAsync($"The user has been unbanned.");
-        }
+        //[Command("toptemp")]
+        //[Summary("temp command")]
+        //[RequireBotPermission(ChannelPermission.SendMessages)]
+        //public async Task Temp()
+        //{
+        //    await TopBuildsManager.SendTopBuildQuickLinks();
+        //}
 
         [Command("purge")]
         [Summary("Bulk deletes messages in chat")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task Purge(int delNumber)
+        public async Task PurgeMod(int delNumber)
+        {
+            var channel = Context.Channel as SocketTextChannel;
+            var items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
+            await channel.DeleteMessagesAsync(items);
+        }
+
+        [Command("purge")]
+        [Summary("Bulk deletes messages in chat")]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
+        [RequireOwner]
+        public async Task PurgeOwner(int delNumber)
         {
             var channel = Context.Channel as SocketTextChannel;
             var items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
             await channel.DeleteMessagesAsync(items);
         }
     }
-    */
+    
 }

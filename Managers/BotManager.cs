@@ -81,7 +81,12 @@ namespace GepBot
                     var result = await commandService.ExecuteAsync(context, argPos, serviceProvider);
 
                     if (!result.IsSuccess && result.Error.HasValue)
-                        await context.Channel.SendMessageAsync($":x: {result.ErrorReason}");
+                        await context.Channel.SendMessageAsync($"This worries me! Unknown command: {context.Message}");
+                }
+                else
+                {
+                    // Check for wiki links
+                    await WikiLinkManager.CheckMessage(message);
                 }
             }
         }

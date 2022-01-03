@@ -39,6 +39,7 @@ namespace GepBot
             discordClient.Ready += ClientReadyAsync;
             discordClient.MessageReceived += HandleMessageAsync;
             discordClient.ReactionAdded += TopBuildsManager.OnReaction;
+            discordClient.ReactionAdded += Modding.ReactionRoles.OnReaction;
         }
 
         public static JObject GetConfig()

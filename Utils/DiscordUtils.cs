@@ -15,11 +15,15 @@ namespace GepBot
         public static Emote Tsar { get; private set; }
         public static Emote Trog { get; private set; }
 
-        public const ulong OUTWARD_DISCORD_ID = 245626447568437249; // 913322914986737674
-        public const ulong TOP_BUILDS_CHANNELID = 916290943840305192; //913335770566258709
-        public const ulong POST_YOUR_BUILDS_CHANNELID = 916290836013142026; //913335663573729290
+        public const ulong OUTWARD_MODDING_DISCORD_ID = 293810842225606656;
 
-        //public static readonly Dictionary<string, IThreadChannel> BUILD_THREADS = new();
+        public const ulong OUTWARD_DISCORD_ID = 245626447568437249;
+        public const ulong TOP_BUILDS_CHANNELID = 916290943840305192;
+        public const ulong POST_YOUR_BUILDS_CHANNELID = 916290836013142026;
+
+        public const ulong OUTWARD_BUILDS_DISCORD_ID = 913322914986737674;
+        public const ulong OUTWARD_BUILDS_TOP_BUILDS_CHANNEL_ID = 913335770566258709;
+        public const ulong OUTWARD_BUILDS_POST_CHANNEL_ID = 913335663573729290;
 
         public static readonly string[] BUILD_CATEGORIES = new string[]
         {
@@ -47,24 +51,6 @@ namespace GepBot
             Gold = guild.Emotes.First(it => it.Name == "gold");
             Tsar = guild.Emotes.First(it => it.Name == "alexandrite"); // tsar
             Trog = guild.Emotes.First(it => it.Name == "trog");
-
-            //// Setup cached build threads
-            //
-            //var postChannel = guild.GetChannel(POST_YOUR_BUILDS_CHANNELID) as SocketTextChannel;
-            //
-            //foreach (var category in BUILD_CATEGORIES)
-            //{
-            //    var thread = postChannel.Threads.FirstOrDefault(it => it.Name.StartsWith(category));
-            //
-            //    if (thread == null)
-            //    {
-            //        string title = $"{category} Builds";
-            //        var msg = await postChannel.SendMessageAsync(title);
-            //        thread = await postChannel.CreateThreadAsync(title, ThreadType.PublicThread, ThreadArchiveDuration.OneDay, msg);
-            //    }
-            //
-            //    BUILD_THREADS.Add(category, thread);
-            //}
         }
 
         public static void ExtractIdsFromMessageLink(string messageLink, out ulong channelID, out ulong messageID)

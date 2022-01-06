@@ -15,7 +15,7 @@ namespace GepBot
 {
     public static class BuildPostManager
     {
-        public static HashSet<string> AlreadyPostedBuildURLs { get; set; } = new();
+        public static HashSet<string> AlreadyPostedBuildURLs { get; } = new();
 
         public static async Task HandleMessageAsync(SocketUserMessage message)
         {
@@ -213,9 +213,10 @@ namespace GepBot
             // start building our actual message (we'll use regex to extract the metadata and build a description)
             var description = new StringBuilder();
 
-            // build name. if no match, default to page name.
-            WikiUtils.RegexWikiFieldRef("name", wikiContent, ref buildName);
-            embed.Title = buildName;
+            //// build name. if no match, default to page name.
+            //WikiUtils.RegexWikiFieldRef("name", wikiContent, ref buildName);
+            //embed.Title = buildName;
+            embed.Title = WikiUtils.ExtractBuildNameFromWikiLink(embed.Url).Replace("_", " ");
 
             // author and discord user
             string authorName = "Unknown";

@@ -21,23 +21,9 @@ namespace GepBot
         public const ulong TOP_BUILDS_CHANNELID = 916290943840305192;
         public const ulong POST_YOUR_BUILDS_CHANNELID = 916290836013142026;
 
-        public const ulong OUTWARD_BUILDS_DISCORD_ID = 913322914986737674;
-        public const ulong OUTWARD_BUILDS_TOP_BUILDS_CHANNEL_ID = 913335770566258709;
-        public const ulong OUTWARD_BUILDS_POST_CHANNEL_ID = 913335663573729290;
-
-        public static readonly string[] BUILD_CATEGORIES = new string[]
-        {
-            "Archer",
-            "Brawler",
-            "Hex Mage",
-            "Mage",
-            "Mercenary",
-            "Rogue",
-            "Spellblade",
-            "Tank",
-            "Co-op",
-            "Other",
-        };
+        //public const ulong OUTWARD_BUILDS_DISCORD_ID = 913322914986737674;
+        //public const ulong OUTWARD_BUILDS_TOP_BUILDS_CHANNEL_ID = 913335770566258709;
+        //public const ulong OUTWARD_BUILDS_POST_CHANNEL_ID = 913335663573729290;
 
         public static int GetOlderMessage(IMessage a, IMessage b)
         {

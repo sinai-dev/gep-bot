@@ -12,6 +12,19 @@ namespace GepBot
 {
     public class TopBuildsManager
     {
+        public static readonly string[] BUILD_CATEGORIES = new string[]
+        {
+            "Archer",
+            "Brawler",
+            "Hex Mage",
+            "Mage",
+            "Mercenary",
+            "Rogue",
+            "Spellblade",
+            "Tank",
+            "Co-op",
+            "Other",
+        };
 
         public static void RegexFieldFromBuildPost(string fieldName, string content, out string result)
         {
@@ -55,7 +68,7 @@ namespace GepBot
 
             var embedBuilder = new EmbedBuilder();
 
-            foreach (var category in DiscordUtils.BUILD_CATEGORIES)
+            foreach (var category in BUILD_CATEGORIES)
             {
                 string title = $"Top {category} Builds";
                 var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains(title)) as RestUserMessage;
@@ -88,7 +101,7 @@ namespace GepBot
             //    messages.AddRange(await thread.GetMessagesAsync(999).FlattenAsync());
 
             var buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var ctg in DiscordUtils.BUILD_CATEGORIES)
+            foreach (var ctg in BUILD_CATEGORIES)
                 buildCategories.Add(ctg, new());
 
             foreach (var message in messages)

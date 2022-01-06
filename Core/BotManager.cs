@@ -15,6 +15,7 @@ using Discord.Rest;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using GepBot.Modding;
 
 namespace GepBot
 {
@@ -59,6 +60,10 @@ namespace GepBot
 
             DiscordUtils.OnDiscordReady();
 
+            // Setup Github stuff
+            GithubManager.Init();
+            IDReservationManager.Init();
+
             ClientReady = true;
         }
 
@@ -79,10 +84,10 @@ namespace GepBot
                 int argPos = -1;
                 if (message.HasStringPrefix("!", ref argPos))
                 {
-                    var result = await commandService.ExecuteAsync(context, argPos, serviceProvider);
+                    await commandService.ExecuteAsync(context, argPos, serviceProvider);
 
-                    if (!result.IsSuccess && result.Error.HasValue)
-                        await context.Channel.SendMessageAsync($"This worries me! Unknown command: {context.Message}");
+                    //if (!result.IsSuccess && result.Error.HasValue)
+                    //    await context.Channel.SendMessageAsync($"This worries me! Unknown command: {context.Message}");
                 }
                 else
                 {

@@ -10,19 +10,18 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using Discord.Rest;
+using GepBot.Modding;
 
 namespace GepBot
 {
     class Program
     {
-        static void Main(string[] args)
-            => new Program().MainAsync().GetAwaiter().GetResult();
+        static void Main() => MainAsync().GetAwaiter().GetResult();
 
-        public async Task MainAsync()
+        public static async Task MainAsync()
         {
             using var services = ConfigureServices();
 
-            Console.WriteLine("Ready for takeoff...");
             var client = services.GetRequiredService<DiscordSocketClient>();
 
             client.Log += Log;

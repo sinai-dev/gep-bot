@@ -130,13 +130,13 @@ namespace GepBot.Modding
             }
             else if (type == ReservationType.PhotonView)
             {
-                start = 960;
-                end = 969;
+                start = 910;
+                end = 919;
                 foreach (var range in ranges)
                 {
                     if (range.start == start)
                     {
-                        start += 10;
+                        start = range.end + 1;
                         end = start + 9;
                     }
                     else

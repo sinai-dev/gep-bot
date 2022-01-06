@@ -175,7 +175,7 @@ namespace GepBot.Modding
                     $"Thank you for confirming. Reserved {type} IDs `{range.start} -> {range.end}` for {forUsername}.", false);
             }
             else
-                await reserveIdsChannel.SendMessageAsync($"Sorry! There are no pending reservations for you, @{forUsername}.");
+                await reserveIdsChannel.SendMessageAsync($"Sorry! There are no pending reservations for you, {forUsername}.");
         }
 
         public static async Task Cmd_GetRanges(ReservationType type)

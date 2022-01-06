@@ -178,6 +178,18 @@ namespace GepBot.Modding
                 await reserveIdsChannel.SendMessageAsync($"Sorry! There are no pending reservations for you, @{forUsername}.");
         }
 
+        public static async Task Cmd_GetRanges(ReservationType type)
+        {
+            var ranges = GetReservations(type);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"The following {type} ranges are reserved:");
+            foreach (var range in ranges)
+                sb.AppendLine($"* {range.name}: `{range.start} -> {range.end}`");
+
+            await reserveIdsChannel.SendMessageAsync(sb.ToString());
+        }
+
         private static async Task DeletePendingReservationAfterDelay(string forUsername)
         {
             await Task.Delay(60 * 1000); // 60 seconds

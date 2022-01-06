@@ -104,7 +104,7 @@ namespace GepBot.Modding
             if (pendingReservations.TryGetValue(user.Username, out PendingReservation existing))
             {
                 await reserveIdsChannel.SendMessageAsync(
-                    $"@{user.Mention} You have a pending reservation already. " +
+                    $"{user.Mention} You have a pending reservation already. " +
                     $"Please type !confirm for `{existing.reservation.start} -> {existing.reservation.end}`.");
                 return;
             }
@@ -186,7 +186,7 @@ namespace GepBot.Modding
             {
                 pendingReservations.Remove(forUsername);
                 await reserveIdsChannel.SendMessageAsync(
-                    $"Timed out waiting for @{forUsername} to confirm their reservation!", false);
+                    $"Timed out waiting for {forUsername} to confirm their reservation!", false);
             }
         }
     }

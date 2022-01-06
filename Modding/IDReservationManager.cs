@@ -101,11 +101,11 @@ namespace GepBot.Modding
 
         public static async Task Cmd_RequestRangeReservation(SocketUser user, ReservationType type)
         {
-            if (pendingReservations.TryGetValue(user.Username, out PendingReservation existing))
+            if (pendingReservations.Any())
             {
+                var existing = pendingReservations.First().Value;
                 await reserveIdsChannel.SendMessageAsync(
-                    $"{user.Mention} You have a pending reservation already. " +
-                    $"Please type !confirm for `{existing.reservation.start} -> {existing.reservation.end}`.");
+                    $"A reservation is already pending. Please wait a few seconds for {existing.reservation.name} to !confirm.");
                 return;
             }
 
@@ -192,7 +192,7 @@ namespace GepBot.Modding
 
         private static async Task DeletePendingReservationAfterDelay(string forUsername)
         {
-            await Task.Delay(60 * 1000); // 60 seconds
+            await Task.Delay(30 * 1000); // 60 seconds
 
             if (pendingReservations.ContainsKey(forUsername))
             {

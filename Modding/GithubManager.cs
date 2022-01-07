@@ -20,11 +20,13 @@ namespace GepBot.Modding
 
         internal static void Init()
         {
+            Program.Log($"Initializing GithubManager...");
+
             if (!File.Exists(AuthConfigFilePath))
             {
                 var json = JsonConvert.SerializeObject(new { username = "USERNAME", password = "PASSWORD" }, Formatting.Indented);
                 File.WriteAllText(AuthConfigFilePath, json);
-                Console.WriteLine("GitHub auth config file did not exist! Created blank file as template.");
+                Program.Log("GitHub auth config file did not exist! Created blank file as template.");
                 return;
             }
 
@@ -37,7 +39,7 @@ namespace GepBot.Modding
 
         public static Signature GetSignature() => new(GetIdentity(), DateTime.Now);
 
-        public static void CreateRepository(string repoUrl, string pathToPullInto)
+        public static void CheckCreateRepository(string repoUrl, string pathToPullInto)
         {
             if (!Directory.Exists(pathToPullInto))
             {
@@ -50,13 +52,16 @@ namespace GepBot.Modding
 
         public static void Pull(string repoPath)
         {
-            using var repo = new Repository(repoPath);
+            Program.Log($"Pulling {repoPath}...");
 
+            using var repo = new Repository(repoPath);
             LibGit2Sharp.Commands.Pull(repo, GetSignature(), new PullOptions());
         }
 
         public static void CommitAndPush(string repoPath, string message)
         {
+            Program.Log($"Comitting and pushing {repoPath} with message: {message}");
+
             using var repo = new Repository(repoPath);
             var sig = GetSignature();
 

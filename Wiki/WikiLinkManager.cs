@@ -17,6 +17,8 @@ namespace GepBot
 
         public static async Task<string> GetBestWikiPage(string search)
         {
+            Program.Log($"Querying wiki for term: {search}");
+
             search = search.Replace(" ", "_");
             var wikiResponse = await WikiUtils.WikiSearch(search);
             var result = JsonConvert.DeserializeObject<JToken>(wikiResponse);
@@ -62,13 +64,15 @@ namespace GepBot
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Exception processing message with build link: {ex}");
+                        Program.Log($"Exception processing message with build link: {ex}");
                     }
                 }
             }
 
             if (wikiLinks.Any() || invalidWikiLinks.Any())
             {
+                Program.Log($"Processing wiki links for message by {message.Author.Username}...");
+
                 var sb = new StringBuilder();
                 if (wikiLinks.Any())
                 {

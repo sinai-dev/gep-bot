@@ -86,7 +86,7 @@ namespace GepBot
         /// </summary>
         public static async Task UpdateTopBuilds()
         {
-            Program.Log($"[{DateTime.Now}] Updating top builds");
+            Program.Log($"Updating top builds");
 
             var topChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
             var topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
@@ -114,7 +114,7 @@ namespace GepBot
                 if (buildCategories.TryGetValue(category, out List<IMessage> list))
                     list.Add(message);
                 else
-                    Console.WriteLine($"Category key not found? '{category}'");
+                    Program.Log($"Category key not found? '{category}'");
             }
 
             foreach (var category in buildCategories)
@@ -144,7 +144,7 @@ namespace GepBot
                         string messageLink = GenerateMessageLink(DiscordUtils.POST_YOUR_BUILDS_CHANNELID, buildMessage.Id);
                         sb.AppendLine($"{count}: {name} ({votes}) | {url}");
                         
-                        //Console.WriteLine($"{name} ({votes}) | [Wiki Page]({url}) | [Message link]({messageLink})".Count());
+                        //Program.Log($"{name} ({votes}) | [Wiki Page]({url}) | [Message link]({messageLink})".Count());
                         //embed.AddField($"{count}", $"");
                     }
                 }
@@ -178,6 +178,8 @@ namespace GepBot
 
             if (channel.Id == DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
             {
+                Program.Log($"Handling reaction from {sender.Username}, on message {reaction.MessageId}");
+
                 try
                 {
                     // the user is probably spam clicking on the reactions.
@@ -210,7 +212,7 @@ namespace GepBot
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Program.Log(ex);
                 }
             }
         }

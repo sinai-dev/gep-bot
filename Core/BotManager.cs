@@ -22,16 +22,21 @@ namespace GepBot
     public class BotManager
     {
         public static bool ClientReady { get; private set; }
-        public static DiscordSocketClient DiscordClient => discordClient;
-        public static HttpClient HttpClient => httpClient;
+        public static event Action OnClientReady;
 
-        private static CommandService commandService;
+        public static DiscordSocketClient DiscordClient => discordClient;
         private static DiscordSocketClient discordClient;
-        private static IServiceProvider serviceProvider;
+
+        public static HttpClient HttpClient => httpClient;
         private static readonly HttpClient httpClient = new();
+
+        private readonly CommandService commandService;
+        private readonly IServiceProvider serviceProvider;
 
         public BotManager(IServiceProvider services)
         {
+            Program.Log($"Initializing BotManager services...");
+
             commandService = services.GetRequiredService<CommandService>();
             discordClient = services.GetRequiredService<DiscordSocketClient>();
             serviceProvider = services;
@@ -39,32 +44,26 @@ namespace GepBot
             // Event handlers
             discordClient.Ready += ClientReadyAsync;
             discordClient.MessageReceived += HandleMessageAsync;
+            
             discordClient.ReactionAdded += TopBuildsManager.OnReaction;
-            discordClient.ReactionAdded += Modding.ReactionRoles.OnReaction;
-        }
-
-        public static JObject GetConfig()
-        {
-            using StreamReader configJson = new StreamReader(Directory.GetCurrentDirectory() + @"/Config.json");
-            return (JObject)JsonConvert.DeserializeObject(configJson.ReadToEnd());
+            discordClient.ReactionAdded += ReactionRoles.OnReaction;
         }
 
         public async Task InitializeAsync() => await commandService.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
         private async Task ClientReadyAsync()
         {
+            Program.Log($"BotManager.ClientReadyAsync");
+
             // Set the online status
             await discordClient.SetStatusAsync(UserStatus.Online);
             // Set the playing status
             await discordClient.SetGameAsync("over Aurai", "", ActivityType.Watching);
 
-            DiscordUtils.OnDiscordReady();
-
-            // Setup Github stuff
-            GithubManager.Init();
-            IDReservationManager.Init();
-
             ClientReady = true;
+            OnClientReady?.Invoke();
+
+            Program.Log($"ClientReadyAsync finished.");
         }
 
         private async Task HandleMessageAsync(SocketMessage socketMsg)
@@ -75,26 +74,30 @@ namespace GepBot
                 return;
 
             var context = new SocketCommandContext(discordClient, message);
+            int argPos = -1;
 
+            // Check if the message was posted in the Outward Discord "Post your builds" channel.
             if (message.Channel.Id == DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
-                await BuildPostManager.HandleMessageAsync(message);
+            {
+                Program.Log($"Handling post-your-builds message.");
+
+                await BuildPostManager.HandleBuildPost(message);
+            }
+            // check for commands
+            else if (message.HasStringPrefix("!", ref argPos))
+            {
+                Program.Log($"Handling !command: {message.CleanContent}");
+
+                await commandService.ExecuteAsync(context, argPos, serviceProvider);
+
+                //if (!result.IsSuccess && result.Error.HasValue)
+                //    await context.Channel.SendMessageAsync($"This worries me! Unknown command: {context.Message}");
+            }
             else
             {
-                // check for commands
-                int argPos = -1;
-                if (message.HasStringPrefix("!", ref argPos))
-                {
-                    await commandService.ExecuteAsync(context, argPos, serviceProvider);
-
-                    //if (!result.IsSuccess && result.Error.HasValue)
-                    //    await context.Channel.SendMessageAsync($"This worries me! Unknown command: {context.Message}");
-                }
-                else
-                {
-                    // Check for wiki links
-                    await WikiLinkManager.CheckMessage(message);
-                }
+                // Check for wiki links
+                await WikiLinkManager.CheckMessage(message);
             }
-        }
+        }   
     }
 }

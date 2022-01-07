@@ -30,8 +30,10 @@ namespace GepBot
             return a.Id.CompareTo(b.Id);
         }
 
-        public static void OnDiscordReady()
+        public static void Init()
         {
+            Program.Log("Initializing DiscordUtils...");
+
             var guild = BotManager.DiscordClient.GetGuild(OUTWARD_DISCORD_ID);
 
             Gold = guild.Emotes.First(it => it.Name == "gold");
@@ -57,8 +59,8 @@ namespace GepBot
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception sending DM to user '{user.Username}':");
-                Console.WriteLine(ex);
+                Program.Log($"Exception sending DM to user '{user.Username}':");
+                Program.Log(ex);
             }
         }
 
@@ -74,7 +76,7 @@ namespace GepBot
             await SendDirectMessage(sb.ToString(), message.Author);
         }
 
-        public static async Task SendExceptionMessage(IMessage message, Exception ex)
+        public static async Task SendExceptionMessage(IMessage message)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"Hello {message.Author.Username}, unfortunately I encountered an error trying to process your build!");
@@ -82,10 +84,8 @@ namespace GepBot
             sb.AppendLine("```");
             sb.AppendLine(message.Content);
             sb.AppendLine("```");
-            sb.AppendLine("And here is the error message, Sinai might ask for this:");
-            sb.AppendLine("```");
-            sb.AppendLine(ex.ToString());
-            sb.AppendLine("```");
+            sb.AppendLine("If you cannot resolve the issue, please contact Sinai#4637 for help.");
+
             await SendDirectMessage(sb.ToString(), message.Author);
         }
     }

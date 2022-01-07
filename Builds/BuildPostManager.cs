@@ -17,13 +17,6 @@ namespace GepBot
     {
         public static HashSet<string> AlreadyPostedBuildURLs { get; } = new();
 
-        public static async Task HandleMessageAsync(SocketUserMessage message)
-        {
-            // Handle messages posted in the "post your build" channel
-            if (message.Channel.Id == DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
-                await HandleBuildPost(message);
-        }
-
         /// <summary>
         /// Handle a user's build url message and post an embed
         /// </summary>
@@ -34,6 +27,8 @@ namespace GepBot
 
             if (AlreadyPostedBuildURLs.Contains(wikiLink))
             {
+                Program.Log($"Linked build is a duplicate of an already posted build.");
+
                 await message.DeleteAsync();
                 await DiscordUtils.SendDirectMessage(
                     "Your build was removed because it was a duplicate of a build which was already posted!", 
@@ -43,6 +38,8 @@ namespace GepBot
 
             try
             {
+                Program.Log($"Attempting to process a build post from {message.Author}: {message.CleanContent}");
+
                 var buildPageUri = new Uri(wikiLink);
 
                 // query the wiki for the source of the page.
@@ -61,7 +58,9 @@ namespace GepBot
                 await newMessage.AddReactionAsync(DiscordUtils.Gold);
                 await newMessage.AddReactionAsync(DiscordUtils.Tsar);
 
-                //// identify correct thread
+                Program.Log($"Handled successfully.");
+
+                //// identify correct thread (NOT USING)
                 //string ctg = category.ToString();
                 //if (DiscordUtils.BUILD_THREADS.TryGetValue(ctg, out IThreadChannel thread))
                 //{
@@ -83,11 +82,11 @@ namespace GepBot
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception handling build post");
-                Console.WriteLine(ex);
+                Program.Log($"Exception handling build post:");
+                Program.Log(ex);
 
                 await message.DeleteAsync();
-                await DiscordUtils.SendExceptionMessage(message, ex);
+                await DiscordUtils.SendExceptionMessage(message);
             }
         }
 
@@ -98,15 +97,20 @@ namespace GepBot
         {
             try
             {
+                Program.Log($"Attempting to update a build post: {messageUrl}");
+
                 var message = await GetBuildMessage(messageUrl);
                 if (message == null)
                     return $"Could not find the message linked! :(";
 
-                return await UpdateBuildPost(message, message.Embeds.First().Url, true);
+                var ret = await UpdateBuildPost(message, message.Embeds.First().Url, true);
+                Program.Log($"Handled successfully.");
+                return ret;
             }
             catch (Exception ex)
             {
-                return $"An error occured! {ex.Message}";
+                Program.Log($"Encountered unexpected error updating a build post: {ex}");
+                return $"This worries me! An unexpected error occured.";
             }
         }
 
@@ -117,6 +121,8 @@ namespace GepBot
         {
             try
             {
+                Program.Log($"Attempting to relink a build post to a new link: {messageLink} -> {newWikiLink}");
+
                 newWikiLink = newWikiLink.Replace("<", "").Replace(">", "");
 
                 if (AlreadyPostedBuildURLs.Contains(newWikiLink))
@@ -124,11 +130,14 @@ namespace GepBot
 
                 var message = await GetBuildMessage(messageLink);
 
-                return await UpdateBuildPost(message, newWikiLink, true);
+                var ret = await UpdateBuildPost(message, newWikiLink, true);
+                Program.Log($"Handled successfully.");
+                return ret;
             }
             catch (Exception ex)
             {
-                return $"An error occured! {ex.Message}";
+                Program.Log($"Encountered unexpected error relinking a build post: {ex}");
+                return $"This worries me! An unexpected error occured.";
             }
         }
 
@@ -149,6 +158,8 @@ namespace GepBot
 
         private static async Task<string> GetWikiBuildContent(string buildName)
         {
+            Program.Log($"Querying wiki for {buildName}...");
+
             // query that page
             string wikiResponse = await WikiUtils.WikiQuery($"Build:{buildName}");
 
@@ -189,7 +200,8 @@ namespace GepBot
             }
             catch (Exception ex)
             {
-                return $"An unexpected error occured! {ex.GetType().Name}: {ex.Message}";
+                Program.Log($"Unexpected error updating build post: {ex}");
+                return $"This worries me! An unexpected error occured.";
             }
         }
 
@@ -198,6 +210,8 @@ namespace GepBot
         /// </summary>
         public static async Task<EmbedBuilder> GenerateBuildEmbedContent(Uri buildPageUri, StringBuilder category)
         {
+            Program.Log($"Generating build post embed content...");
+
             // get the page name by taking a substring from the end of the url
             var buildName = buildPageUri.ToString()[WikiUtils.VALID_BUILD_LINK.Length..];
 

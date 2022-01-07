@@ -15,71 +15,24 @@ namespace GepBot.Modding
 {
     public static class IDReservationManager
     {
-        public class ReservationComparer : IComparer<RangeReservation>
-        {
-            public bool Ascending;
-
-            public ReservationComparer(bool ascending)
-            {
-                this.Ascending = ascending;
-            }
-
-            public int Compare(RangeReservation x, RangeReservation y)
-            {
-                return Ascending
-                    ? x.start.CompareTo(y.start)
-                    : y.start.CompareTo(x.start);
-            }
-        }
-
-        public enum ReservationType
-        {
-            ItemOrStatus,
-            PhotonView,
-        }
-
-        public class PendingReservation
-        {
-            public RangeReservation reservation;
-            public ReservationType type;
-
-            public PendingReservation(RangeReservation reservation, ReservationType type)
-            {
-                this.reservation = reservation;
-                this.type = type;
-            }
-        }
-
-        public struct RangeReservation
-        {
-            public RangeReservation(int start, int end, string name)
-            {
-                this.start = start;
-                this.end = end;
-                this.name = name;
-            }
-
-            public int start, end;
-            public string name;
-        }
-
         const string REPO_URL = "https://github.com/Mefino/ModdingCommunityResources/";
-        const string REPO_PATH = "OutwardModdingCommunity_Resources";
+        const string LOCAL_REPO_PATH = "OutwardModdingCommunity_Resources";
 
-        static readonly string IDRANGES_PATH = Path.Combine(REPO_PATH, "id-reservations", "id-reservations.json");
-        static readonly string PHOTONVIEWIDS_PATH = Path.Combine(REPO_PATH, "id-reservations", "photon-viewid-reservations.json");
+        static readonly string IDRANGES_PATH = Path.Combine(LOCAL_REPO_PATH, "id-reservations", "id-reservations.json");
+        static readonly string PHOTONVIEWIDS_PATH = Path.Combine(LOCAL_REPO_PATH, "id-reservations", "photon-viewid-reservations.json");
 
         const long RESERVE_IDS_CHANNELID = 799163523061514241;
+        public static SocketTextChannel reserveIdsChannel;
 
-        internal static SocketTextChannel reserveIdsChannel;
-        private static readonly Dictionary<string, PendingReservation> pendingReservations = new();
+        static readonly Dictionary<string, PendingReservation> pendingReservations = new();
 
         public static void Init()
         {
-            GithubManager.CreateRepository(REPO_URL, REPO_PATH);
+            Program.Log($"Initializing IDReservationManager...");
 
-            var guild = BotManager.DiscordClient.Guilds.First(it => it.Id == DiscordUtils.OUTWARD_MODDING_DISCORD_ID);
-            reserveIdsChannel = (SocketTextChannel)guild.GetChannel(RESERVE_IDS_CHANNELID);
+            GithubManager.CheckCreateRepository(REPO_URL, LOCAL_REPO_PATH);
+
+            reserveIdsChannel = (ModdingServicesManager.ModdingDiscord as SocketGuild).GetChannel(RESERVE_IDS_CHANNELID) as SocketTextChannel;
         }
 
         private static string GetFilePathForType(ReservationType type) => type switch
@@ -91,7 +44,9 @@ namespace GepBot.Modding
 
         private static List<RangeReservation> GetReservations(ReservationType type)
         {
-            GithubManager.Pull(REPO_PATH);
+            Program.Log($"Fetching {type} ID reservations...");
+
+            GithubManager.Pull(LOCAL_REPO_PATH);
 
             string filePath = GetFilePathForType(type);
             var ret = JsonConvert.DeserializeObject<RangeReservation[]>(File.ReadAllText(filePath)).ToList();
@@ -101,6 +56,8 @@ namespace GepBot.Modding
 
         public static async Task Cmd_RequestRangeReservation(SocketUser user, ReservationType type)
         {
+            Program.Log($"Processing {type} ID request for {user.Username}...");
+
             if (pendingReservations.Any())
             {
                 var existing = pendingReservations.First().Value;
@@ -157,6 +114,8 @@ namespace GepBot.Modding
         {
             if (pendingReservations.TryGetValue(forUsername, out PendingReservation pending))
             {
+                Program.Log($"Confirming reservation for {forUsername}...");
+
                 pendingReservations.Remove(forUsername);
 
                 var range = pending.reservation;
@@ -169,7 +128,7 @@ namespace GepBot.Modding
                 File.WriteAllText(filePath, JsonConvert.SerializeObject(ranges.ToArray(), Formatting.Indented));
 
                 // Push it to the repository
-                GithubManager.CommitAndPush(REPO_PATH, $"Reserving {type} ID {range.start} -> {range.end} for {forUsername}");
+                GithubManager.CommitAndPush(LOCAL_REPO_PATH, $"Reserving {type} ID {range.start} -> {range.end} for {forUsername}");
 
                 await reserveIdsChannel.SendMessageAsync(
                     $"Thank you for confirming. Reserved {type} IDs `{range.start} -> {range.end}` for {forUsername}.", false);
@@ -180,6 +139,8 @@ namespace GepBot.Modding
 
         public static async Task Cmd_GetRanges(ReservationType type)
         {
+            Program.Log($"Listing reserved IDs for {type}...");
+
             var ranges = GetReservations(type);
 
             var sb = new StringBuilder();
@@ -192,7 +153,7 @@ namespace GepBot.Modding
 
         private static async Task DeletePendingReservationAfterDelay(string forUsername)
         {
-            await Task.Delay(30 * 1000); // 60 seconds
+            await Task.Delay(30 * 1000); // 30 seconds
 
             if (pendingReservations.ContainsKey(forUsername))
             {

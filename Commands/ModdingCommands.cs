@@ -20,7 +20,7 @@ namespace GepBot.Commands
             if (IsWrongChannel)
                 return;
 
-            await IDReservationManager.Cmd_RequestRangeReservation(Context.User, IDReservationManager.ReservationType.ItemOrStatus);
+            await IDReservationManager.Cmd_RequestRangeReservation(Context.User, ReservationType.ItemOrStatus);
         }
 
         [Command("reserve-photon")]
@@ -29,7 +29,7 @@ namespace GepBot.Commands
             if (IsWrongChannel)
                 return;
 
-            await IDReservationManager.Cmd_RequestRangeReservation(Context.User, IDReservationManager.ReservationType.PhotonView);
+            await IDReservationManager.Cmd_RequestRangeReservation(Context.User, ReservationType.PhotonView);
         }
 
         [Command("confirm")]
@@ -47,7 +47,7 @@ namespace GepBot.Commands
             if (IsWrongChannel)
                 return;
 
-            await IDReservationManager.Cmd_GetRanges(IDReservationManager.ReservationType.ItemOrStatus);
+            await IDReservationManager.Cmd_GetRanges(ReservationType.ItemOrStatus);
         }
 
         [Command("listreserved-photon")]
@@ -56,7 +56,7 @@ namespace GepBot.Commands
             if (IsWrongChannel)
                 return;
 
-            await IDReservationManager.Cmd_GetRanges(IDReservationManager.ReservationType.PhotonView);
+            await IDReservationManager.Cmd_GetRanges(ReservationType.PhotonView);
         }
 
     }

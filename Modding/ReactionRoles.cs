@@ -10,19 +10,11 @@ namespace GepBot.Modding
 {
     public static class ReactionRoles
     {
-        internal static IGuild moddingDiscordGuild;
         private static IRole helpNeededRole;
 
-        static ReactionRoles()
+        internal static void Init()
         {
-            moddingDiscordGuild = BotManager.DiscordClient.GetGuild(DiscordUtils.OUTWARD_MODDING_DISCORD_ID);
-
-            helpNeededRole = moddingDiscordGuild.Roles.FirstOrDefault(x => x.Name == "needs-help");
-
-            if (helpNeededRole == null)
-            {
-                Console.WriteLine("ITS NULL");
-            }
+            helpNeededRole = ModdingServicesManager.ModdingDiscord.Roles.FirstOrDefault(x => x.Name == "needs-help");
         }
 
         internal static async Task OnReaction(Cacheable<IUserMessage, ulong> origMsg, 
@@ -36,7 +28,9 @@ namespace GepBot.Modding
                 if (reaction.User.Value != null)
                     user = (IGuildUser)reaction.User.Value;
                 else
-                    user = await moddingDiscordGuild.GetUserAsync(reaction.UserId);
+                    user = await ModdingServicesManager.ModdingDiscord.GetUserAsync(reaction.UserId);
+
+                Program.Log($"Handling needs-help reaction for {user.Username}");
 
                 try
                 {
@@ -45,7 +39,7 @@ namespace GepBot.Modding
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Program.Log(ex);
                 }
             }
         }

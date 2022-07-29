@@ -91,13 +91,18 @@ namespace GepBot.Modding
                 nextEnd = 919;
                 foreach (RangeReservation reservedRange in reservedRanges)
                 {
-                    if (reservedRange.start == nextStart)
+                    Program.Log($"Comparing nextStart {nextStart} to reservedRange start {reservedRange.start}...");
+                    if (reservedRange.start <= nextStart)
                     {
+                        Program.Log($"Match, jumping to {reservedRange.end + 1}...");
                         nextStart = reservedRange.end + 1;
                         nextEnd = nextStart + 9;
                     }
                     else
+                    {
+                        Program.Log("No match, breaking.");
                         break;
+                    }
                 }
             }
 

@@ -19,7 +19,7 @@ namespace GepBot.Commands
         //    await TopBuildsManager.SendTopBuildQuickLinks();
         //}
 
-        [Command("purge")]
+        [Command("purgemessages")]
         [Summary("Bulk deletes messages in chat")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
@@ -30,7 +30,7 @@ namespace GepBot.Commands
             await channel.DeleteMessagesAsync(items);
         }
 
-        [Command("purge")]
+        [Command("purgemessages")]
         [Summary("Bulk deletes messages in chat")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireOwner]

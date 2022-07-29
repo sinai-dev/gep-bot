@@ -24,16 +24,16 @@ namespace GepBot
         {
             Log($"Initializing Gep-bot {VERSION}...");
 
-            using var services = ConfigureServices();
-            var client = services.GetRequiredService<DiscordSocketClient>();
+            using ServiceProvider services = ConfigureServices();
+            DiscordSocketClient client = services.GetRequiredService<DiscordSocketClient>();
 
             // Handling client logging
             client.Log += Log;
             services.GetRequiredService<CommandService>().Log += Log;
 
             // Add OnClientReady listeners
-            BotManager.OnClientReady += DiscordUtils.Init;
-            BotManager.OnClientReady += ModdingServicesManager.Init;
+            GepBot.OnClientReady += DiscordUtils.Init;
+            GepBot.OnClientReady += ModdingServicesManager.Init;
 
             Log($"Reading token config file...");
 
@@ -45,7 +45,7 @@ namespace GepBot
             // Log in to Discord and start the bot.
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
-            await services.GetRequiredService<BotManager>().InitializeAsync();
+            await services.GetRequiredService<GepBot>().InitializeAsync();
 
             // Update top builds every hour
             IntervalTask.Create(TimeSpan.FromHours(1), TopBuildsManager.UpdateTopBuilds);
@@ -76,7 +76,7 @@ namespace GepBot
                     DefaultRunMode = RunMode.Async,
                     CaseSensitiveCommands = false
                 }))
-                .AddSingleton<BotManager>()
+                .AddSingleton<GepBot>()
                 .BuildServiceProvider();
         }
 

@@ -49,7 +49,7 @@ namespace GepBot.Modding
             GithubManager.Pull(LOCAL_REPO_PATH);
 
             string filePath = GetFilePathForType(type);
-            var ret = JsonConvert.DeserializeObject<RangeReservation[]>(File.ReadAllText(filePath)).ToList();
+            List<RangeReservation> ret = JsonConvert.DeserializeObject<RangeReservation[]>(File.ReadAllText(filePath)).ToList();
             ret.Sort(new ReservationComparer(type != ReservationType.ItemOrStatus));
             return ret;
         }
@@ -60,26 +60,26 @@ namespace GepBot.Modding
 
             if (pendingReservations.Any())
             {
-                var existing = pendingReservations.First().Value;
+                PendingReservation existing = pendingReservations.First().Value;
                 await reserveIdsChannel.SendMessageAsync(
                     $"A reservation is already pending. Please wait a few seconds for {existing.reservation.name} to !confirm.");
                 return;
             }
 
-            var ranges = GetReservations(type);
-            int start = 0;
-            int end = 0;
+            List<RangeReservation> reservedRanges = GetReservations(type);
+            int nextStart = 0;
+            int nextEnd = 0;
             
             if (type == ReservationType.ItemOrStatus)
             {
-                foreach (var range in ranges)
+                foreach (RangeReservation reservedRange in reservedRanges)
                 {
-                    if (range.start > 0)
+                    if (reservedRange.start > 0)
                         continue;
-                    if (range.start == start)
+                    if (reservedRange.start == nextStart)
                     {
-                        start -= 1000;
-                        end = start - 999;
+                        nextStart -= 1000;
+                        nextEnd = nextStart - 999;
                     }
                     else
                         break;
@@ -87,21 +87,21 @@ namespace GepBot.Modding
             }
             else if (type == ReservationType.PhotonView)
             {
-                start = 910;
-                end = 919;
-                foreach (var range in ranges)
+                nextStart = 910;
+                nextEnd = 919;
+                foreach (RangeReservation reservedRange in reservedRanges)
                 {
-                    if (range.start == start)
+                    if (reservedRange.start == nextStart)
                     {
-                        start = range.end + 1;
-                        end = start + 9;
+                        nextStart = reservedRange.end + 1;
+                        nextEnd = nextStart + 9;
                     }
                     else
                         break;
                 }
             }
 
-            var reservation = new RangeReservation(start, end, user.Username);
+            RangeReservation reservation = new(nextStart, nextEnd, user.Username);
             pendingReservations.Add(user.Username, new PendingReservation(reservation, type));
 
             DeletePendingReservationAfterDelay(user.Username).GetAwaiter();
@@ -118,13 +118,14 @@ namespace GepBot.Modding
 
                 pendingReservations.Remove(forUsername);
 
-                var range = pending.reservation;
-                var type = pending.type;
+                RangeReservation range = pending.reservation;
+                ReservationType type = pending.type;
                 string filePath = GetFilePathForType(type);
 
                 // Add the range to the array, then write to the json file
-                var ranges = GetReservations(type);
+                List<RangeReservation> ranges = GetReservations(type);
                 ranges.Add(range);
+                ranges.Sort(new ReservationComparer(type != ReservationType.ItemOrStatus));
                 File.WriteAllText(filePath, JsonConvert.SerializeObject(ranges.ToArray(), Formatting.Indented));
 
                 // Push it to the repository
@@ -141,11 +142,11 @@ namespace GepBot.Modding
         {
             Program.Log($"Listing reserved IDs for {type}...");
 
-            var ranges = GetReservations(type);
+            List<RangeReservation> ranges = GetReservations(type);
 
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine($"The following {type} ranges are reserved:");
-            foreach (var range in ranges)
+            foreach (RangeReservation range in ranges)
                 sb.AppendLine($"* {range.name}: `{range.start} -> {range.end}`");
 
             await reserveIdsChannel.SendMessageAsync(sb.ToString());

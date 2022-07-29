@@ -41,7 +41,7 @@ namespace GepBot.Commands
         [Summary("Updated the build post with the supplied message link")]
         public async Task UpdateBuild(string messageLink)
         {
-            var result = await BuildPostManager.UpdateBuildMessage(messageLink);
+            string result = await BuildPostManager.UpdateBuildMessage(messageLink);
             await ReplyAsync(result);
         }
 
@@ -50,7 +50,7 @@ namespace GepBot.Commands
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task RelinkBuildModsOnly(string messageLink, string newWikiLink)
         {
-            var result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
+            string result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
             await ReplyAsync(result);
         }
 
@@ -59,7 +59,7 @@ namespace GepBot.Commands
         [RequireOwner]
         public async Task RelinkBuild(string messageLink, string newWikiLink)
         {
-            var result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
+            string result = await BuildPostManager.RelinkBuildPost(messageLink, newWikiLink);
             await ReplyAsync(result);
         }
     }

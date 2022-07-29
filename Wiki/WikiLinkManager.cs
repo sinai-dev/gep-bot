@@ -20,14 +20,14 @@ namespace GepBot
             Program.Log($"Querying wiki for term: {search}");
 
             search = search.Replace(" ", "_");
-            var wikiResponse = await WikiUtils.WikiSearch(search);
-            var result = JsonConvert.DeserializeObject<JToken>(wikiResponse);
+            string wikiResponse = await WikiUtils.WikiSearch(search);
+            JToken result = JsonConvert.DeserializeObject<JToken>(wikiResponse);
             return result.Children().ToArray()[3][0].ToString();
         }
 
         public static async Task CheckMessage(SocketUserMessage message)
         {
-            var matches = LinkRegex.Matches(message.Content);
+            MatchCollection matches = LinkRegex.Matches(message.Content);
 
             List<string> wikiLinks = new();
             List<string> invalidWikiLinks = new();
@@ -56,9 +56,9 @@ namespace GepBot
                 {
                     try
                     {
-                        var uri = new Uri(wikiPageURL);
-                        var embed = await BuildPostManager.GenerateBuildEmbedContent(uri, new StringBuilder());
-                        var newMessage = await message.Channel.SendMessageAsync(embed: embed.Build());
+                        Uri uri = new Uri(wikiPageURL);
+                        EmbedBuilder embed = await BuildPostManager.GenerateBuildEmbedContent(uri, new StringBuilder());
+                        Discord.Rest.RestUserMessage newMessage = await message.Channel.SendMessageAsync(embed: embed.Build());
                         // only post one build at a time, dont wanna spam.
                         return;
                     }
@@ -73,7 +73,7 @@ namespace GepBot
             {
                 Program.Log($"Processing wiki links for message by {message.Author.Username}...");
 
-                var sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 if (wikiLinks.Any())
                 {
                     foreach (string link in wikiLinks)
@@ -86,7 +86,7 @@ namespace GepBot
                 if (invalidWikiLinks.Any())
                 {
                     sb.Append("This worries me:");
-                    foreach (var link in invalidWikiLinks)
+                    foreach (string link in invalidWikiLinks)
                         sb.Append($" '{link}'");
                     sb.AppendLine($" <:trog:{DiscordUtils.Trog.Id}>");
                 }

@@ -19,7 +19,7 @@ using GepBot.Modding;
 
 namespace GepBot
 {
-    public class BotManager
+    public class GepBot
     {
         public static bool ClientReady { get; private set; }
         public static event Action OnClientReady;
@@ -33,7 +33,7 @@ namespace GepBot
         private readonly CommandService commandService;
         private readonly IServiceProvider serviceProvider;
 
-        public BotManager(IServiceProvider services)
+        public GepBot(IServiceProvider services)
         {
             Program.Log($"Initializing BotManager services...");
 
@@ -73,7 +73,7 @@ namespace GepBot
                 || message.Channel is IDMChannel)
                 return;
 
-            var context = new SocketCommandContext(discordClient, message);
+            SocketCommandContext context = new SocketCommandContext(discordClient, message);
             int argPos = -1;
 
             // Check if the message was posted in the Outward Discord "Post your builds" channel.

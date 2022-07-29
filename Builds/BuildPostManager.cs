@@ -40,7 +40,7 @@ namespace GepBot
             {
                 Program.Log($"Attempting to process a build post from {message.Author}: {message.CleanContent}");
 
-                var buildPageUri = new Uri(wikiLink);
+                Uri buildPageUri = new Uri(wikiLink);
 
                 // query the wiki for the source of the page.
                 StringBuilder category = new();
@@ -51,7 +51,7 @@ namespace GepBot
 
                 // send new message
                 // post our new message
-                var newMessage = await message.Channel.SendMessageAsync(embed: embed.Build());
+                IUserMessage newMessage = await message.Channel.SendMessageAsync(embed: embed.Build());
 
                 // add reactions
                 await newMessage.AddReactionAsync(DiscordUtils.ThumbsUp);
@@ -99,11 +99,11 @@ namespace GepBot
             {
                 Program.Log($"Attempting to update a build post: {messageUrl}");
 
-                var message = await GetBuildMessage(messageUrl);
+                RestUserMessage message = await GetBuildMessage(messageUrl);
                 if (message == null)
                     return $"Could not find the message linked! :(";
 
-                var ret = await UpdateBuildPost(message, message.Embeds.First().Url, true);
+                string ret = await UpdateBuildPost(message, message.Embeds.First().Url, true);
                 Program.Log($"Handled successfully.");
                 return ret;
             }
@@ -128,9 +128,9 @@ namespace GepBot
                 if (AlreadyPostedBuildURLs.Contains(newWikiLink))
                     return "A build with that wiki link has already been posted before!";
 
-                var message = await GetBuildMessage(messageLink);
+                RestUserMessage message = await GetBuildMessage(messageLink);
 
-                var ret = await UpdateBuildPost(message, newWikiLink, true);
+                string ret = await UpdateBuildPost(message, newWikiLink, true);
                 Program.Log($"Handled successfully.");
                 return ret;
             }
@@ -148,7 +148,7 @@ namespace GepBot
             if (channelID != DiscordUtils.POST_YOUR_BUILDS_CHANNELID)
                 throw new Exception("This message is not in the 'post-your-builds' channel!");
 
-            var channel = BotManager.DiscordClient.GetGuild(DiscordUtils.OUTWARD_DISCORD_ID).GetChannel(channelID) as IMessageChannel;
+            IMessageChannel channel = GepBot.DiscordClient.GetGuild(DiscordUtils.OUTWARD_DISCORD_ID).GetChannel(channelID) as IMessageChannel;
 
             if (await channel.GetMessageAsync(messageID) is not RestUserMessage message)
                 throw new Exception("Could not find a valid post from the provided message link!");
@@ -164,7 +164,7 @@ namespace GepBot
             string wikiResponse = await WikiUtils.WikiQuery($"Build:{buildName}");
 
             // parse the json to get to the actual source
-            var result = JsonConvert.DeserializeObject<JToken>(wikiResponse);
+            JToken result = JsonConvert.DeserializeObject<JToken>(wikiResponse);
             string wikiContent = result["query"]["pages"].First.First["revisions"].First["*"].ToString();
 
             return wikiContent;
@@ -174,8 +174,8 @@ namespace GepBot
         {
             try
             {
-                var buildUrl = new Uri(wikiLink);
-                var embed = await GenerateBuildEmbedContent(buildUrl, new StringBuilder());
+                Uri buildUrl = new Uri(wikiLink);
+                EmbedBuilder embed = await GenerateBuildEmbedContent(buildUrl, new StringBuilder());
 
                 await message.ModifyAsync((MessageProperties msg) =>
                 {
@@ -213,19 +213,19 @@ namespace GepBot
             Program.Log($"Generating build post embed content...");
 
             // get the page name by taking a substring from the end of the url
-            var buildName = buildPageUri.ToString()[WikiUtils.VALID_BUILD_LINK.Length..];
+            string buildName = buildPageUri.ToString()[WikiUtils.VALID_BUILD_LINK.Length..];
 
             string wikiContent = await GetWikiBuildContent(buildName);
 
             // Start creating our embed message
-            var embed = new EmbedBuilder
+            EmbedBuilder embed = new EmbedBuilder
             {
                 Url = buildPageUri.ToString(),
                 Color = Color.DarkGrey
             };
 
             // start building our actual message (we'll use regex to extract the metadata and build a description)
-            var description = new StringBuilder();
+            StringBuilder description = new StringBuilder();
 
             //// build name. if no match, default to page name.
             //WikiUtils.RegexWikiFieldRef("name", wikiContent, ref buildName);
@@ -257,7 +257,7 @@ namespace GepBot
 
             // breakthroughs
             description.Append($"Breakthroughs: ");
-            var breakthroughs = new List<string>();
+            List<string> breakthroughs = new List<string>();
             for (int i = 0; i < 3; i++)
             {
                 if (WikiUtils.RegexWikiField($"breakthrough{i + 1}", wikiContent, out string bt))
@@ -270,9 +270,9 @@ namespace GepBot
 
             // equipment
             description.Append($"Equipment: ");
-            var equipment = new List<string>();
-            var equipmentFields = new string[] { "weapon", "offhand", "helmet", "armor", "boots", "backpack" };
-            foreach (var field in equipmentFields)
+            List<string> equipment = new List<string>();
+            string[] equipmentFields = new string[] { "weapon", "offhand", "helmet", "armor", "boots", "backpack" };
+            foreach (string field in equipmentFields)
             {
                 if (WikiUtils.RegexWikiField(field, wikiContent, out string item))
                 {
@@ -288,7 +288,7 @@ namespace GepBot
 
             // quickslots
             description.Append($"Quickslots: ");
-            var quickslots = new List<string>();
+            List<string> quickslots = new List<string>();
             for (int i = 0; i < 8; i++)
             {
                 if (WikiUtils.RegexWikiField($"quickslot{i + 1}", wikiContent, out string qs))

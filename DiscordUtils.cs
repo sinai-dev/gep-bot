@@ -34,7 +34,7 @@ namespace GepBot
         {
             Program.Log("Initializing DiscordUtils...");
 
-            var guild = BotManager.DiscordClient.GetGuild(OUTWARD_DISCORD_ID);
+            SocketGuild guild = GepBot.DiscordClient.GetGuild(OUTWARD_DISCORD_ID);
 
             Gold = guild.Emotes.First(it => it.Name == "gold");
             Tsar = guild.Emotes.First(it => it.Name == "alexandrite"); // tsar
@@ -43,7 +43,7 @@ namespace GepBot
 
         public static void ExtractIdsFromMessageLink(string messageLink, out ulong channelID, out ulong messageID)
         {
-            var split = messageLink.Split('/');
+            string[] split = messageLink.Split('/');
             channelID = ulong.Parse(split[^2]);
             messageID = ulong.Parse(split[^1]);
         }
@@ -52,7 +52,7 @@ namespace GepBot
         {
             try
             {
-                var sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 sb.AppendLine(message);
                 sb.AppendLine("*I am a bot, and this action was performed automatically. Please message Sinai#4637 if you need further assistance!*");
                 await user.SendMessageAsync(sb.ToString());
@@ -66,7 +66,7 @@ namespace GepBot
 
         public static async Task SendDeletedBuildLinkMessage(IMessage message)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Your message was removed because I did not recognise it as a valid Outward Wiki Build link! Please post the link by itself.");
             sb.AppendLine("Here is the original message for reference:");
             sb.AppendLine("```");
@@ -78,7 +78,7 @@ namespace GepBot
 
         public static async Task SendExceptionMessage(IMessage message)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Hello {message.Author.Username}, unfortunately I encountered an error trying to process your build!");
             sb.AppendLine("Here is the original message for reference:");
             sb.AppendLine("```");

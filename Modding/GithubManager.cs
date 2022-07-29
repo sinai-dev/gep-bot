@@ -24,13 +24,13 @@ namespace GepBot.Modding
 
             if (!File.Exists(AuthConfigFilePath))
             {
-                var json = JsonConvert.SerializeObject(new { username = "USERNAME", password = "PASSWORD" }, Formatting.Indented);
+                string json = JsonConvert.SerializeObject(new { username = "USERNAME", password = "PASSWORD" }, Formatting.Indented);
                 File.WriteAllText(AuthConfigFilePath, json);
                 Program.Log("GitHub auth config file did not exist! Created blank file as template.");
                 return;
             }
 
-            var authJson = JsonConvert.DeserializeObject<JToken>(File.ReadAllText(AuthConfigFilePath));
+            JToken authJson = JsonConvert.DeserializeObject<JToken>(File.ReadAllText(AuthConfigFilePath));
             username = authJson["username"].ToString();
             password = authJson["password"].ToString();
         }
@@ -54,7 +54,7 @@ namespace GepBot.Modding
         {
             Program.Log($"Pulling {repoPath}...");
 
-            using var repo = new Repository(repoPath);
+            using Repository repo = new Repository(repoPath);
             LibGit2Sharp.Commands.Pull(repo, GetSignature(), new PullOptions());
         }
 
@@ -62,17 +62,17 @@ namespace GepBot.Modding
         {
             Program.Log($"Comitting and pushing {repoPath} with message: {message}");
 
-            using var repo = new Repository(repoPath);
-            var sig = GetSignature();
+            using Repository repo = new Repository(repoPath);
+            Signature sig = GetSignature();
 
             LibGit2Sharp.Commands.Stage(repo, "*");
 
             repo.Commit(message, sig, sig);
 
-            var remote = repo.Network.Remotes["origin"];
-            var pushRefSpec = @"refs/heads/main";
+            Remote remote = repo.Network.Remotes["origin"];
+            string pushRefSpec = @"refs/heads/main";
 
-            var pushOptions = new PushOptions();
+            PushOptions pushOptions = new PushOptions();
             pushOptions.CredentialsProvider = (url, user, types) => new UsernamePasswordCredentials()
             {
                 Username = username,

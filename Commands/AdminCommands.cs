@@ -25,8 +25,8 @@ namespace GepBot.Commands
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task PurgeMod(int delNumber)
         {
-            var channel = Context.Channel as SocketTextChannel;
-            var items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            IEnumerable<IMessage> items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
             await channel.DeleteMessagesAsync(items);
         }
 
@@ -36,8 +36,8 @@ namespace GepBot.Commands
         [RequireOwner]
         public async Task PurgeOwner(int delNumber)
         {
-            var channel = Context.Channel as SocketTextChannel;
-            var items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
+            SocketTextChannel channel = Context.Channel as SocketTextChannel;
+            IEnumerable<IMessage> items = await channel.GetMessagesAsync(delNumber + 1).FlattenAsync();
             await channel.DeleteMessagesAsync(items);
         }
     }

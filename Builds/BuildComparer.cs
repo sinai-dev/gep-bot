@@ -16,7 +16,7 @@ namespace GepBot
         public static int GetVoteTally(IMessage message)
         {
             int votes = 0;
-            foreach (var reaction in message.Reactions)
+            foreach (KeyValuePair<IEmote, ReactionMetadata> reaction in message.Reactions)
             {
                 if (reaction.Key.Name == DiscordUtils.ThumbsUp.Name)
                     votes += reaction.Value.ReactionCount - 1;

@@ -18,14 +18,14 @@ namespace GepBot
         public static async Task<string> WikiSearch(string title)
         {
             string url = @$"https://outward.fandom.com/api.php?action=opensearch&search={title}";
-            string result = await BotManager.HttpClient.GetStringAsync(url);
+            string result = await GepBot.HttpClient.GetStringAsync(url);
             return result;
         }
 
         public static async Task<string> WikiQuery(string pageName)
         {
             string url = @$"https://outward.fandom.com/api.php?action=query&titles={pageName}&prop=revisions&rvprop=content&format=json"; ;
-            string result = await BotManager.HttpClient.GetStringAsync(url);
+            string result = await GepBot.HttpClient.GetStringAsync(url);
             
             // A valid query result seems to always start with this, quick way to check the page is valid.
             if (result.StartsWith("{\"batchcomplete\":\"\",\"warnings\":"))

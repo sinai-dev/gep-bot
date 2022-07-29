@@ -15,7 +15,7 @@ namespace GepBot.Modding
         {
             Program.Log($"Initializing Modding Discord services...");
 
-            ModdingDiscord = BotManager.DiscordClient.GetGuild(DiscordUtils.OUTWARD_MODDING_DISCORD_ID);
+            ModdingDiscord = GepBot.DiscordClient.GetGuild(DiscordUtils.OUTWARD_MODDING_DISCORD_ID);
 
             ReactionRoles.Init();
             GithubManager.Init();

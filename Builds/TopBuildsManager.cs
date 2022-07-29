@@ -51,7 +51,7 @@ namespace GepBot
 
         public static string GenerateMessageLink(ulong channel, ulong message)
         {
-            var messageLink = new StringBuilder();
+            StringBuilder messageLink = new StringBuilder();
             messageLink.Append("https://discord.com/channels/")
                 .Append(DiscordUtils.OUTWARD_DISCORD_ID)
                 .Append('/')
@@ -63,15 +63,15 @@ namespace GepBot
 
         public static async Task SendTopBuildQuickLinks()
         {
-            var topChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
-            var topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
+            SocketTextChannel topChannel = GepBot.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
+            IEnumerable<IMessage> topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
 
-            var embedBuilder = new EmbedBuilder();
+            EmbedBuilder embedBuilder = new EmbedBuilder();
 
-            foreach (var category in BUILD_CATEGORIES)
+            foreach (string category in BUILD_CATEGORIES)
             {
                 string title = $"Top {category} Builds";
-                var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains(title)) as RestUserMessage;
+                RestUserMessage topMessage = topMessages.FirstOrDefault(it => it.Content.Contains(title)) as RestUserMessage;
                 
                 string messageLink = GenerateMessageLink(topMessage.Channel.Id, topMessage.Id);
 
@@ -88,23 +88,23 @@ namespace GepBot
         {
             Program.Log($"Updating top builds");
 
-            var topChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
-            var topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
+            SocketTextChannel topChannel = GepBot.DiscordClient.GetChannel(DiscordUtils.TOP_BUILDS_CHANNELID) as SocketTextChannel;
+            IEnumerable<IMessage> topMessages = await topChannel.GetMessagesAsync(20).FlattenAsync();
 
             BuildPostManager.AlreadyPostedBuildURLs.Clear();
 
             // Get the build channel messages and add them into a sorted list
-            var buildChannel = BotManager.DiscordClient.GetChannel(DiscordUtils.POST_YOUR_BUILDS_CHANNELID) as SocketTextChannel;
-            var messages = await buildChannel.GetMessagesAsync(999).FlattenAsync();
+            SocketTextChannel buildChannel = GepBot.DiscordClient.GetChannel(DiscordUtils.POST_YOUR_BUILDS_CHANNELID) as SocketTextChannel;
+            IEnumerable<IMessage> messages = await buildChannel.GetMessagesAsync(999).FlattenAsync();
             //var messages = new List<IMessage>();
             //foreach (var thread in DiscordUtils.BUILD_THREADS.Values)
             //    messages.AddRange(await thread.GetMessagesAsync(999).FlattenAsync());
 
-            var buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var ctg in BUILD_CATEGORIES)
+            Dictionary<string, List<IMessage>> buildCategories = new Dictionary<string, List<IMessage>>(StringComparer.OrdinalIgnoreCase);
+            foreach (string ctg in BUILD_CATEGORIES)
                 buildCategories.Add(ctg, new());
 
-            foreach (var message in messages)
+            foreach (IMessage message in messages)
             {
                 if (!message.Embeds.Any())
                     continue;
@@ -117,11 +117,11 @@ namespace GepBot
                     Program.Log($"Category key not found? '{category}'");
             }
 
-            foreach (var category in buildCategories)
+            foreach (KeyValuePair<string, List<IMessage>> category in buildCategories)
             {
                 category.Value.Sort(BuildComparer.Instance);
 
-                var sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 sb.AppendLine($"```fix");
                 sb.AppendLine($"~~~ Top {category.Key} Builds ~~~");
                 sb.AppendLine($"```");
@@ -129,7 +129,7 @@ namespace GepBot
                 //var embed = new EmbedBuilder();
 
                 int count = 0;
-                foreach (var buildMessage in category.Value)
+                foreach (IMessage buildMessage in category.Value)
                 {
                     string url = buildMessage.Embeds.First().Url;
                     if (BuildPostManager.AlreadyPostedBuildURLs.Contains(url))
@@ -150,7 +150,7 @@ namespace GepBot
                 }
 
                 // get the message in the top builds channel
-                var topMessage = topMessages.FirstOrDefault(it => it.Content.Contains($"Top {category.Key} Builds")) as RestUserMessage;
+                RestUserMessage topMessage = topMessages.FirstOrDefault(it => it.Content.Contains($"Top {category.Key} Builds")) as RestUserMessage;
 
                 // if no message, send one first so we can edit it.
                 if (topMessage == null)
@@ -172,7 +172,7 @@ namespace GepBot
         /// </summary>
         public static async Task OnReaction(Cacheable<IUserMessage, ulong> _, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            var sender = reaction.User.Value;
+            IUser sender = reaction.User.Value;
             if (sender.IsBot)
                 return;
 
@@ -190,7 +190,7 @@ namespace GepBot
                             return;
                         else // otherwise remove this reaction and return
                         {
-                            var message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
+                            IMessage message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
                             await message.RemoveReactionAsync(reaction.Emote, sender);
                             return;
                         }
@@ -199,8 +199,8 @@ namespace GepBot
                     {
                         pendingReactionCache.Add(sender.Id, reaction.Emote);
 
-                        var message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
-                        foreach (var otherReaction in message.Reactions)
+                        IMessage message = await reaction.Channel.GetMessageAsync(reaction.MessageId);
+                        foreach (KeyValuePair<IEmote, ReactionMetadata> otherReaction in message.Reactions)
                         {
                             if (otherReaction.Key.Name == reaction.Emote.Name)
                                 continue;
